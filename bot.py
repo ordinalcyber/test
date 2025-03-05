@@ -6,7 +6,10 @@ import numpy as np
 from xgboost import XGBClassifier
 import requests
 import time
-
+import os
+from dotenv import load_dotenv
+from keep_alive import keep_alive
+load_dotenv()
 
 
 exchange = ccxt.binance()
@@ -15,8 +18,8 @@ exchange = ccxt.binance()
 SYMBOLS = "BTC/USDT"
 TIMEFRAME = "1h"
 WINDOW_OHLCV = 200  # Pour les prédictions dans analyze_market
-LIMIT_TRAIN = 50000 # Pour l’entraînement et test total
-WEBHOOK_URL = "https://discord.com/api/webhooks/1346973362957582437/xzh_PmcavDDL-oqrJDteX4rLYVFR2U2CBNlbsJL7ION_ERNvnwxaXP8UjrZukuthc8RB"
+LIMIT_TRAIN = 1000 # Pour l’entraînement et test total
+WEBHOOK_URL = os.getenv('WEBHOOK_URL')
 
 
 # Récupération des données OHLCV
@@ -227,6 +230,7 @@ train_size = int(len(df_all) - WINDOW_OHLCV)
 df_train = df_all.iloc[:train_size]
 print(f"Entraînement du modèle sur {len(df_train)} périodes...")
 model = train_ml_model(df_train)
+keep_alive()
 while __name__ == "__main__":
 
     df_window =fetch_ohlcv(SYMBOLS,TIMEFRAME,WINDOW_OHLCV)
