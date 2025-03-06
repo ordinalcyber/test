@@ -199,7 +199,6 @@ print("Modèle chargé avec succès !")
 
 
 # Ensure correct event loop policy for Windows
-asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 client = discord.Client(intents=discord.Intents.all())
 intents = discord.Intents.all()
 bot = commands.Bot(command_prefix="$", intents=intents)
