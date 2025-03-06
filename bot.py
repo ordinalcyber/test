@@ -207,8 +207,8 @@ bot = commands.Bot(command_prefix="$", intents=intents)
 async def on_message(message):
     if message.author.bot :
         return
-    timer = df_window["timestamp"].iloc[-1]
     df_window = fetch_ohlcv(SYMBOLS, TIMEFRAME, WINDOW_OHLCV)
+    timer = df_window["timestamp"].iloc[-1]
     rsi_window = calculate_rsi(fetch_ohlcv(SYMBOLS, TIMEFRAME, WINDOW_OHLCV))
     signal, trend_pct, stop_loss, take_profit, subtle_prediction, prediction, proba = analyze_market(
         df_window, rsi_window, SYMBOLS, model
