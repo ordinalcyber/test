@@ -1,15 +1,17 @@
 #rework des fonction de stop loss et gain qui sont trop abuser
-
+import asyncio
 import ccxt
 import pandas as pd
 import numpy as np
 from xgboost import XGBClassifier
-import requests
 import time
 import os
 from dotenv import load_dotenv
 from flask import Flask
 from threading import Thread
+import discord
+from discord.ext import commands
+
 
 app = Flask("")
 @app.route('/')
@@ -24,13 +26,13 @@ def keep_alive():
 load_dotenv()
 
 
-exchange = ccxt.binanceus()
+exchange = ccxt.binance()
 
 # Paramètres
 SYMBOLS = "BTC/USDT"
 TIMEFRAME = "1h"
 WINDOW_OHLCV = 200  # Pour les prédictions dans analyze_market
-LIMIT_TRAIN = 50000 # Pour l’entraînement et test total
+LIMIT_TRAIN = 1000 # Pour l’entraînement et test total
 WEBHOOK_URL = os.getenv('WEBHOOK_URL')
 
 
@@ -187,40 +189,45 @@ def analyze_market(df, rsi_series, symbol, model):
             subtle_prediction = "Légère baisse probable"
 
     return signal, trend_pct, stop_loss, take_profit, subtle_prediction, prediction, proba
-
-
-def send_discord_message(message):
-    data = {"content": message}
-    response = requests.post(WEBHOOK_URL, json=data)
-    if response.status_code == 204:
-        print("Message envoyé avec succès ! ✅")
-    else:
-        print(f"Erreur {response.status_code}: {response.text}")
-
-
-
-
+keep_alive()
 model = XGBClassifier()
 model.load_model('xgboost_model.json')
 print("Modèle chargé avec succès !")
-while __name__ == "__main__":
-    keep_alive()
-    df_window =fetch_ohlcv(SYMBOLS,TIMEFRAME,WINDOW_OHLCV)
-    rsi_window = calculate_rsi(fetch_ohlcv(SYMBOLS,TIMEFRAME,WINDOW_OHLCV))
+
+
+
+
+
+# Ensure correct event loop policy for Windows
+asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+client = discord.Client(intents=discord.Intents.all())
+intents = discord.Intents.all()
+bot = commands.Bot(command_prefix="$", intents=intents)
+
+@client.event
+async def on_message(message):
+    if message.author.bot :
+        return
+    df_window = fetch_ohlcv(SYMBOLS, TIMEFRAME, WINDOW_OHLCV)
+    rsi_window = calculate_rsi(fetch_ohlcv(SYMBOLS, TIMEFRAME, WINDOW_OHLCV))
     signal, trend_pct, stop_loss, take_profit, subtle_prediction, prediction, proba = analyze_market(
         df_window, rsi_window, SYMBOLS, model
     )
-    print("signal:",signal)
-    print("stop loss:",stop_loss)
-    print("take profit:",take_profit)
-    print("subtle predictions:",subtle_prediction)
-    print("prediction :",prediction)
-    print("proba:",proba)
+    print("signal:", signal)
+    print("stop loss:", stop_loss)
+    print("take profit:", take_profit)
+    print("subtle predictions:", subtle_prediction)
+    print("prediction :", prediction)
+    print("proba:", proba)
     print("attente de la prochaine heure")
-    # Envoie un message
-    send_discord_message("takeprofit")
-    send_discord_message(str(take_profit))
-    send_discord_message("stop loss")
-    send_discord_message(str(stop_loss))
-    time.sleep(50)
+    await message.channel.send("signal:")
+    await message.channel.send(signal)
+    await message.channel.send("stop_loss:")
+    await message.channel.send(stop_loss)
+    await message.channel.send("take profit:")
+    await message.channel.send(take_profit)
+    await message.channel.send("proba")
+    await message.channel.send(proba)
 
+if __name__ == "__main__":
+    client.run(token=WEBHOOK_URL)
