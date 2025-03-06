@@ -29,7 +29,7 @@ exchange = ccxt.binanceus()
 SYMBOLS = "BTC/USDT"
 TIMEFRAME = "1h"
 WINDOW_OHLCV = 200  # Pour les prédictions dans analyze_market
-LIMIT_TRAIN = 49000 # Pour l’entraînement et test total
+LIMIT_TRAIN = 50000 # Pour l’entraînement et test total
 WEBHOOK_URL = os.getenv('WEBHOOK_URL')
 
 
@@ -37,11 +37,10 @@ WEBHOOK_URL = os.getenv('WEBHOOK_URL')
 def fetch_ohlcv(symbol, timeframe, limit):
     all_ohlcv = []
     total_periods = limit
-    max_per_call = 1000
+    max_per_call = 10000
     while len(all_ohlcv) < total_periods:
         ohlcv = exchange.fetch_ohlcv(symbol, timeframe, limit=min(max_per_call, total_periods - len(all_ohlcv)))
         all_ohlcv.extend(ohlcv)
-        time.sleep(1)  # Respect des limites API
 
     df = pd.DataFrame(all_ohlcv, columns=["timestamp", "open", "high", "low", "close", "volume"])
     df["timestamp"] = pd.to_datetime(df["timestamp"], unit="ms")
