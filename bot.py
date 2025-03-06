@@ -199,12 +199,12 @@ def send_discord_message(message):
 
 
 
-keep_alive()
+
 model = XGBClassifier()
 model.load_model('xgboost_model.json')
 print("Modèle chargé avec succès !")
 while __name__ == "__main__":
-
+    keep_alive()
     df_window =fetch_ohlcv(SYMBOLS,TIMEFRAME,WINDOW_OHLCV)
     rsi_window = calculate_rsi(fetch_ohlcv(SYMBOLS,TIMEFRAME,WINDOW_OHLCV))
     signal, trend_pct, stop_loss, take_profit, subtle_prediction, prediction, proba = analyze_market(
@@ -222,5 +222,5 @@ while __name__ == "__main__":
     send_discord_message(str(take_profit))
     send_discord_message("stop loss")
     send_discord_message(str(stop_loss))
-    time.sleep(60)
+    time.sleep(50)
 
