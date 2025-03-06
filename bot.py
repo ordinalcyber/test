@@ -208,6 +208,7 @@ async def on_message(message):
     if message.author.bot :
         return
     df_window = fetch_ohlcv(SYMBOLS, TIMEFRAME, WINDOW_OHLCV)
+    timer = df_window["timestamp"].iloc[-1]
     rsi_window = calculate_rsi(fetch_ohlcv(SYMBOLS, TIMEFRAME, WINDOW_OHLCV))
     signal, trend_pct, stop_loss, take_profit, subtle_prediction, prediction, proba = analyze_market(
         df_window, rsi_window, SYMBOLS, model
@@ -219,6 +220,8 @@ async def on_message(message):
     print("prediction :", prediction)
     print("proba:", proba)
     print("attente de la prochaine heure")
+    await message.channel.send("heure UTC (heure francaise -1)")
+    await message.channel.send(timer)
     await message.channel.send("signal:")
     await message.channel.send(signal)
     await message.channel.send("stop_loss:")
