@@ -16,7 +16,8 @@ app = Flask("")
 def home() :
     return "le bot est en ligne"
 def run():
-    app.run(host='0.0.0.0',port=8080)
+    port = int(os.environ.get("PORT", 8080))
+    app.run(host='0.0.0.0',port=port)
 def keep_alive():
     t=Thread(target=run)
     t.start()
@@ -37,11 +38,11 @@ WEBHOOK_URL = os.getenv('WEBHOOK_URL')
 def fetch_ohlcv(symbol, timeframe, limit):
     all_ohlcv = []
     total_periods = limit
-    max_per_call = 10000
+    max_per_call = 1000
     while len(all_ohlcv) < total_periods:
         ohlcv = exchange.fetch_ohlcv(symbol, timeframe, limit=min(max_per_call, total_periods - len(all_ohlcv)))
         all_ohlcv.extend(ohlcv)
-
+        time.sleep(1)
     df = pd.DataFrame(all_ohlcv, columns=["timestamp", "open", "high", "low", "close", "volume"])
     df["timestamp"] = pd.to_datetime(df["timestamp"], unit="ms")
     return df.tail(total_periods)
@@ -88,45 +89,7 @@ def calculate_momentum(df, window=10):
         print(f"Erreur dans calculate_momentum: {e}")
         return 0.0
 # Modèle ML avec XGBoost
-def train_ml_model(df):
-    features = pd.DataFrame({
-        "rsi": calculate_rsi(df),
-        "ema_diff": calculate_ema(df, 10) - calculate_ema(df, 50),
-        "macd_diff": calculate_macd(df)[0] - calculate_macd(df)[1],
-        "momentum": df["close"].pct_change(periods=10) * 100,
-        "volume_rel": df["volume"] / df["volume"].rolling(window=20).mean(),
-        "moving_average": calculate_moving_average(df),
-        "atr": calculate_atr(df),
-        "volume_change": df["volume"].pct_change(periods=1) * 100,
-        "ema_200": calculate_ema(df, 200),
-        "ema_100": calculate_ema(df, 100),
-        "ema_10": calculate_ema(df, 10),
-        "ema_50": calculate_ema(df, 50),
-        "close_pct_change_5": df["close"].pct_change(periods=5) * 100  # Nouvelle feature
 
-    }).dropna()
-
-    target = (df["close"].shift(-1) > df["close"]).astype(int).reindex(features.index).dropna()
-    features = features.iloc[:-1]
-    target = target.iloc[:-1]
-
-    if len(features) != len(target) or len(features) < 1:
-        print(f"Données insuffisantes ou incohérentes pour l’entraînement: features={len(features)}, target={len(target)}")
-        return None
-
-    model = XGBClassifier(
-        n_estimators=500,
-        max_depth=3,
-        learning_rate=0.01,
-        subsample=0.9,
-        colsample_bytree=0.7,
-        random_state=42,
-        min_child_weight = 7,
-        booster = "dart"
-    )
-    model.fit(features, target)
-    print("equilibre des classes :",target.value_counts(normalize=True))  # Vérifie l'équilibre des classes
-    return model
 
 def calculate_atr(df, window=14):
     tr = pd.concat([df["high"] - df["low"],
@@ -235,12 +198,11 @@ def send_discord_message(message):
         print(f"Erreur {response.status_code}: {response.text}")
 
 
-df_all = fetch_ohlcv(SYMBOLS, TIMEFRAME, LIMIT_TRAIN)
-train_size = int(len(df_all) - WINDOW_OHLCV)
-df_train = df_all.iloc[:train_size]
-print(f"Entraînement du modèle sur {len(df_train)} périodes...")
-model = train_ml_model(df_train)
+
 keep_alive()
+model = XGBClassifier()
+model.load_model('xgboost_model.json')
+print("Modèle chargé avec succès !")
 while __name__ == "__main__":
 
     df_window =fetch_ohlcv(SYMBOLS,TIMEFRAME,WINDOW_OHLCV)
