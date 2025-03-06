@@ -8,7 +8,18 @@ import requests
 import time
 import os
 from dotenv import load_dotenv
-from keep_alive import keep_alive
+from flask import Flask
+from threading import Thread
+
+app = Flask("")
+@app.route('/')
+def home() :
+    return "le bot est en ligne"
+def run():
+    app.run(host='0.0.0.0',port=8080)
+def keep_alive():
+    t=Thread(target=run)
+    t.start()
 load_dotenv()
 
 
@@ -18,7 +29,7 @@ exchange = ccxt.binance()
 SYMBOLS = "BTC/USDT"
 TIMEFRAME = "1h"
 WINDOW_OHLCV = 200  # Pour les prédictions dans analyze_market
-LIMIT_TRAIN = 50000 # Pour l’entraînement et test total
+LIMIT_TRAIN = 1000 # Pour l’entraînement et test total
 WEBHOOK_URL = os.getenv('WEBHOOK_URL')
 
 
