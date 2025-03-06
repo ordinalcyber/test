@@ -29,7 +29,7 @@ exchange = ccxt.binanceus()
 SYMBOLS = "BTC/USDT"
 TIMEFRAME = "1h"
 WINDOW_OHLCV = 200  # Pour les prédictions dans analyze_market
-LIMIT_TRAIN = 1000 # Pour l’entraînement et test total
+LIMIT_TRAIN = 49000 # Pour l’entraînement et test total
 WEBHOOK_URL = os.getenv('WEBHOOK_URL')
 
 
