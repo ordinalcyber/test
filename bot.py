@@ -222,4 +222,5 @@ while __name__ == "__main__":
     send_discord_message(str(take_profit))
     send_discord_message("stop loss")
     send_discord_message(str(stop_loss))
-    time.sleep(600)
+    time.sleep(60)
+
