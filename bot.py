@@ -26,7 +26,7 @@ def keep_alive():
 load_dotenv()
 
 
-exchange = ccxt.binance()
+exchange = ccxt.binanceus()
 
 # Paramètres
 SYMBOLS = "BTC/USDT"
