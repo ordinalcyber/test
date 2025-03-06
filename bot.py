@@ -207,6 +207,7 @@ bot = commands.Bot(command_prefix="$", intents=intents)
 async def on_message(message):
     if message.author.bot :
         return
+    timer = df_window["timestamp"].iloc[-1]
     df_window = fetch_ohlcv(SYMBOLS, TIMEFRAME, WINDOW_OHLCV)
     rsi_window = calculate_rsi(fetch_ohlcv(SYMBOLS, TIMEFRAME, WINDOW_OHLCV))
     signal, trend_pct, stop_loss, take_profit, subtle_prediction, prediction, proba = analyze_market(
@@ -219,6 +220,8 @@ async def on_message(message):
     print("prediction :", prediction)
     print("proba:", proba)
     print("attente de la prochaine heure")
+    await message.channel.send("heure UTC (heure francaise -1)")
+    await message.channel.send(timer)
     await message.channel.send("signal:")
     await message.channel.send(signal)
     await message.channel.send("stop_loss:")
