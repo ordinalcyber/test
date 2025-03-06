@@ -1,5 +1,4 @@
 Flask==2.0.1
-threading==3.6.6
 ccxt==1.55.29
 pandas==1.2.4
 numpy==1.20.3
