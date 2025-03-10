@@ -192,12 +192,9 @@ def analyze_market(df, rsi_series, symbol, model):
 keep_alive()
 model = XGBClassifier()
 model.load_model('xgboost_model.json')
+model2 = XGBClassifier()
+model2.load_model('model_solana_eur.json')
 print("Modèle chargé avec succès !")
-
-
-
-
-
 # Ensure correct event loop policy for Windows
 client = discord.Client(intents=discord.Intents.all())
 intents = discord.Intents.all()
@@ -205,6 +202,7 @@ bot = commands.Bot(command_prefix="$", intents=intents)
 
 @client.event
 async def on_message(message):
+    SYMBOLS = "BTC/USDT"
     if message.author.bot :
         return
     df_window = fetch_ohlcv(SYMBOLS, TIMEFRAME, WINDOW_OHLCV)
@@ -220,6 +218,32 @@ async def on_message(message):
     print("prediction :", prediction)
     print("proba:", proba)
     print("attente de la prochaine heure")
+    await message.channel.send("Pour la devise BTC/USDT")
+    await message.channel.send("heure UTC (heure francaise -1)")
+    await message.channel.send(timer)
+    await message.channel.send("signal:")
+    await message.channel.send(signal)
+    await message.channel.send("stop_loss:")
+    await message.channel.send(stop_loss)
+    await message.channel.send("take profit:")
+    await message.channel.send(take_profit)
+    await message.channel.send("proba")
+    await message.channel.send(proba)
+    SYMBOLS = "SOL/USDT"
+    df_window = fetch_ohlcv(SYMBOLS, TIMEFRAME, WINDOW_OHLCV)
+    timer = df_window["timestamp"].iloc[-1]
+    rsi_window = calculate_rsi(fetch_ohlcv(SYMBOLS, TIMEFRAME, WINDOW_OHLCV))
+    signal, trend_pct, stop_loss, take_profit, subtle_prediction, prediction, proba = analyze_market(
+        df_window, rsi_window, SYMBOLS, model2
+    )
+    print("signal:", signal)
+    print("stop loss:", stop_loss)
+    print("take profit:", take_profit)
+    print("subtle predictions:", subtle_prediction)
+    print("prediction :", prediction)
+    print("proba:", proba)
+    print("attente de la prochaine heure")
+    await message.channel.send("Pour la devise SOL/USDT")
     await message.channel.send("heure UTC (heure francaise -1)")
     await message.channel.send(timer)
     await message.channel.send("signal:")
