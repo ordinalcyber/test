@@ -147,7 +147,7 @@ def analyze_market(df, rsi_series, symbol, model):
     take_profit = None
 
 
-       if prediction == 1:
+    if prediction == 1:
         df = df.copy()
         signal = "Haussier (XGBoost Prediction)"
         df.loc[:, "high_low"] = df["high"] - df["low"]
@@ -194,6 +194,8 @@ model = XGBClassifier()
 model.load_model('xgboost_model.json')
 model2 = XGBClassifier()
 model2.load_model('model_solana_eur.json')
+model3 = XGBClassifier()
+model3.load_model('model_solana_eur_minute.json')
 print("Modèle chargé avec succès !")
 # Ensure correct event loop policy for Windows
 client = discord.Client(intents=discord.Intents.all())
@@ -202,6 +204,7 @@ bot = commands.Bot(command_prefix="$", intents=intents)
 
 @client.event
 async def on_message(message):
+    TIMEFRAME = "1h"
     SYMBOLS = "BTC/USDT"
     if message.author.bot :
         return
@@ -222,13 +225,16 @@ async def on_message(message):
     await message.channel.send("heure UTC (heure francaise -1)")
     await message.channel.send(timer)
     await message.channel.send("signal:")
-    await message.channel.send(signal)
-    await message.channel.send("stop_loss:")
-    await message.channel.send(stop_loss)
-    await message.channel.send("take profit:")
-    await message.channel.send(take_profit)
-    await message.channel.send("proba")
-    await message.channel.send(proba)
+    try:
+        await message.channel.send(signal)
+        await message.channel.send("stop_loss:")
+        await message.channel.send(stop_loss)
+        await message.channel.send("take profit:")
+        await message.channel.send(take_profit)
+        await message.channel.send("proba")
+        await message.channel.send(proba)
+    except:
+        await message.channel.send("rien a afficher")
     SYMBOLS = "SOL/USDT"
     df_window = fetch_ohlcv(SYMBOLS, TIMEFRAME, WINDOW_OHLCV)
     timer = df_window["timestamp"].iloc[-1]
@@ -246,14 +252,51 @@ async def on_message(message):
     await message.channel.send("Pour la devise SOL/USDT")
     await message.channel.send("heure UTC (heure francaise -1)")
     await message.channel.send(timer)
+    await message.channel.send("Pour la devise BTC/USDT")
+    await message.channel.send("heure UTC (heure francaise -1)")
+    await message.channel.send(timer)
     await message.channel.send("signal:")
-    await message.channel.send(signal)
-    await message.channel.send("stop_loss:")
-    await message.channel.send(stop_loss)
-    await message.channel.send("take profit:")
-    await message.channel.send(take_profit)
-    await message.channel.send("proba")
-    await message.channel.send(proba)
+    try:
+        await message.channel.send(signal)
+        await message.channel.send("stop_loss:")
+        await message.channel.send(stop_loss)
+        await message.channel.send("take profit:")
+        await message.channel.send(take_profit)
+        await message.channel.send("proba")
+        await message.channel.send(proba)
+    except:
+        await message.channel.send("rien a afficher")
+    SYMBOLS = "SOL/EUR"
+    TIMEFRAME = "1m"
+    df_window = fetch_ohlcv(SYMBOLS, TIMEFRAME, WINDOW_OHLCV)
+    timer = df_window["timestamp"].iloc[-1]
+    rsi_window = calculate_rsi(fetch_ohlcv(SYMBOLS, TIMEFRAME, WINDOW_OHLCV))
+    signal, trend_pct, stop_loss, take_profit, subtle_prediction, prediction, proba = analyze_market(
+        df_window, rsi_window, SYMBOLS, model2)
+    print("signal:", signal)
+    print("stop loss:", stop_loss)
+    print("take profit:", take_profit)
+    print("subtle predictions:", subtle_prediction)
+    print("prediction :", prediction)
+    print("proba:", proba)
+    print("attente de la prochaine heure")
+    await message.channel.send("Pour la devise SOL/USDT")
+    await message.channel.send("heure UTC (heure francaise -1)")
+    await message.channel.send(timer)
+    await message.channel.send("Pour la devise BTC/USDT")
+    await message.channel.send("heure UTC (heure francaise -1)")
+    await message.channel.send(timer)
+    await message.channel.send("signal:")
+    try:
+        await message.channel.send(signal)
+        await message.channel.send("stop_loss:")
+        await message.channel.send(stop_loss)
+        await message.channel.send("take profit:")
+        await message.channel.send(take_profit)
+        await message.channel.send("proba")
+        await message.channel.send(proba)
+    except:
+        await message.channel.send("rien a afficher")
 
 if __name__ == "__main__":
     client.run(token=WEBHOOK_URL)
