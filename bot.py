@@ -147,7 +147,7 @@ def analyze_market(df, rsi_series, symbol, model):
     take_profit = None
 
 
-    if prediction == 1:
+       if prediction == 1:
         df = df.copy()
         signal = "Haussier (XGBoost Prediction)"
         df.loc[:, "high_low"] = df["high"] - df["low"]
@@ -168,7 +168,7 @@ def analyze_market(df, rsi_series, symbol, model):
         dernier_prix = df["close"].iloc[-1]
 
         # 🔥 Ratio Risk-Reward réduit
-        risk_reward_ratio = 1.25
+        risk_reward_ratio = 2
 
         # 🟢 3. Calcul du Stop-Loss et du Take-Profit (plus serré)
         stop_loss = max(support, dernier_prix - (atr * atr_dynamic_factor*risk_reward_ratio*confidence_factor))
