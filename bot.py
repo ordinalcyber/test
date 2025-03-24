@@ -224,8 +224,8 @@ async def on_message(message):
     await message.channel.send("Pour la devise BTC/USDT")
     await message.channel.send("heure UTC (heure francaise -1)")
     await message.channel.send(timer)
-    await message.channel.send("signal:")
-    try:
+    if signal != "neutre":
+        await message.channel.send("signal:")
         await message.channel.send(signal)
         await message.channel.send("stop_loss:")
         await message.channel.send(stop_loss)
@@ -233,7 +233,6 @@ async def on_message(message):
         await message.channel.send(take_profit)
         await message.channel.send("proba")
         await message.channel.send(proba)
-    except:
         await message.channel.send("rien a afficher")
     SYMBOLS = "SOL/USDT"
     df_window = fetch_ohlcv(SYMBOLS, TIMEFRAME, WINDOW_OHLCV)
@@ -255,8 +254,8 @@ async def on_message(message):
     await message.channel.send("Pour la devise BTC/USDT")
     await message.channel.send("heure UTC (heure francaise -1)")
     await message.channel.send(timer)
-    await message.channel.send("signal:")
-    try:
+    if signal != "neutre":     
+        await message.channel.send("signal:")
         await message.channel.send(signal)
         await message.channel.send("stop_loss:")
         await message.channel.send(stop_loss)
@@ -264,7 +263,6 @@ async def on_message(message):
         await message.channel.send(take_profit)
         await message.channel.send("proba")
         await message.channel.send(proba)
-    except:
         await message.channel.send("rien a afficher")
     SYMBOLS = "SOL/EUR"
     TIMEFRAME = "1m"
@@ -286,8 +284,8 @@ async def on_message(message):
     await message.channel.send("Pour la devise BTC/USDT")
     await message.channel.send("heure UTC (heure francaise -1)")
     await message.channel.send(timer)
-    await message.channel.send("signal:")
-    try:
+    if signal != "neutre":
+        await message.channel.send("signal:")
         await message.channel.send(signal)
         await message.channel.send("stop_loss:")
         await message.channel.send(stop_loss)
@@ -295,7 +293,6 @@ async def on_message(message):
         await message.channel.send(take_profit)
         await message.channel.send("proba")
         await message.channel.send(proba)
-    except:
         await message.channel.send("rien a afficher")
 
 if __name__ == "__main__":
