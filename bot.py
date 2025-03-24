@@ -278,10 +278,7 @@ async def on_message(message):
     print("prediction :", prediction)
     print("proba:", proba)
     print("attente de la prochaine heure")
-    await message.channel.send("Pour la devise SOL/USDT")
-    await message.channel.send("heure UTC (heure francaise -1)")
-    await message.channel.send(timer)
-    await message.channel.send("Pour la devise BTC/USDT")
+    await message.channel.send("Pour la devise SOL/EUR")
     await message.channel.send("heure UTC (heure francaise -1)")
     await message.channel.send(timer)
     if signal != "neutre":
