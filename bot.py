@@ -11,7 +11,8 @@ from flask import Flask
 from threading import Thread
 import discord
 from discord.ext import commands
-
+import asyncio
+import threading
 
 app = Flask("")
 @app.route('/')
@@ -29,8 +30,8 @@ load_dotenv()
 exchange = ccxt.binanceus()
 
 # Paramètres
-SYMBOLS = "BTC/USDT"
-TIMEFRAME = "1h"
+SYMBOLS = "SOL/EUR"
+TIMEFRAME = "1m"
 WINDOW_OHLCV = 200  # Pour les prédictions dans analyze_market
 LIMIT_TRAIN = 1000 # Pour l’entraînement et test total
 WEBHOOK_URL = os.getenv('WEBHOOK_URL')
@@ -190,107 +191,64 @@ def analyze_market(df, rsi_series, symbol, model):
 
     return signal, trend_pct, stop_loss, take_profit, subtle_prediction, prediction, proba
 keep_alive()
-model = XGBClassifier()
-model.load_model('xgboost_model.json')
-model2 = XGBClassifier()
-model2.load_model('model_solana_eur.json')
-model3 = XGBClassifier()
-model3.load_model('model_solana_eur_minute.json')
 print("Modèle chargé avec succès !")
 # Ensure correct event loop policy for Windows
 client = discord.Client(intents=discord.Intents.all())
 intents = discord.Intents.all()
 bot = commands.Bot(command_prefix="$", intents=intents)
+predictions_finales =[]
+model = XGBClassifier()
+model.load_model('model_solana_eur.json')
+def test_model(model):
+    df_all = fetch_ohlcv(SYMBOLS, TIMEFRAME, LIMIT_TRAIN)
+    if df_all.empty:
+        print("Échec de la récupération des données historiques")
+        return
+    print(f"Dernière donnée OHLCV : {df_all['timestamp'].iloc[-1]} (UTC)")
 
+
+    print(f"recuperation du modèle ")
+    if model is None:
+        print("Échec de l’entraînement du modèle")
+        return
+
+    predictions = []
+
+    timer = df_all["timestamp"].iloc[-1]
+    close = df_all["close"].iloc[-1]
+    rsi_window = calculate_rsi(fetch_ohlcv(SYMBOLS, TIMEFRAME, WINDOW_OHLCV))
+    signal, trend_pct, stop_loss, take_profit, subtle_prediction, prediction, proba = analyze_market(
+        df_all, rsi_window, SYMBOLS, model)
+    predictions.append(timer)
+    predictions.append(signal)
+    predictions.append(proba)
+    predictions.append(take_profit)
+    predictions.append(stop_loss)
+    print(predictions)
+    predictions_finales.append(predictions)
 @client.event
 async def on_message(message):
-    TIMEFRAME = "1h"
-    SYMBOLS = "BTC/USDT"
-    if message.author.bot :
+    if message.author.bot:
         return
-    df_window = fetch_ohlcv(SYMBOLS, TIMEFRAME, WINDOW_OHLCV)
-    timer = df_window["timestamp"].iloc[-1]
-    rsi_window = calculate_rsi(fetch_ohlcv(SYMBOLS, TIMEFRAME, WINDOW_OHLCV))
-    signal, trend_pct, stop_loss, take_profit, subtle_prediction, prediction, proba = analyze_market(
-        df_window, rsi_window, SYMBOLS, model
-    )
-    print("signal:", signal)
-    print("stop loss:", stop_loss)
-    print("take profit:", take_profit)
-    print("subtle predictions:", subtle_prediction)
-    print("prediction :", prediction)
-    print("proba:", proba)
-    print("attente de la prochaine heure")
-    await message.channel.send("Pour la devise BTC/USDT")
-    await message.channel.send("heure UTC (heure francaise -1)")
-    await message.channel.send(timer)
-    if signal != "neutre":
-        await message.channel.send("signal:")
-        await message.channel.send(signal)
-        await message.channel.send("stop_loss:")
-        await message.channel.send(stop_loss)
-        await message.channel.send("take profit:")
-        await message.channel.send(take_profit)
-        await message.channel.send("proba")
-        await message.channel.send(proba)
-        await message.channel.send("rien a afficher")
-    SYMBOLS = "SOL/USDT"
-    df_window = fetch_ohlcv(SYMBOLS, TIMEFRAME, WINDOW_OHLCV)
-    timer = df_window["timestamp"].iloc[-1]
-    rsi_window = calculate_rsi(fetch_ohlcv(SYMBOLS, TIMEFRAME, WINDOW_OHLCV))
-    signal, trend_pct, stop_loss, take_profit, subtle_prediction, prediction, proba = analyze_market(
-        df_window, rsi_window, SYMBOLS, model2
-    )
-    print("signal:", signal)
-    print("stop loss:", stop_loss)
-    print("take profit:", take_profit)
-    print("subtle predictions:", subtle_prediction)
-    print("prediction :", prediction)
-    print("proba:", proba)
-    print("attente de la prochaine heure")
-    await message.channel.send("Pour la devise SOL/USDT")
-    await message.channel.send("heure UTC (heure francaise -1)")
-    await message.channel.send(timer)
-    await message.channel.send("Pour la devise BTC/USDT")
-    await message.channel.send("heure UTC (heure francaise -1)")
-    await message.channel.send(timer)
-    if signal != "neutre":     
-        await message.channel.send("signal:")
-        await message.channel.send(signal)
-        await message.channel.send("stop_loss:")
-        await message.channel.send(stop_loss)
-        await message.channel.send("take profit:")
-        await message.channel.send(take_profit)
-        await message.channel.send("proba")
-        await message.channel.send(proba)
-        await message.channel.send("rien a afficher")
-    SYMBOLS = "SOL/EUR"
-    TIMEFRAME = "1m"
-    df_window = fetch_ohlcv(SYMBOLS, TIMEFRAME, WINDOW_OHLCV)
-    timer = df_window["timestamp"].iloc[-1]
-    rsi_window = calculate_rsi(fetch_ohlcv(SYMBOLS, TIMEFRAME, WINDOW_OHLCV))
-    signal, trend_pct, stop_loss, take_profit, subtle_prediction, prediction, proba = analyze_market(
-        df_window, rsi_window, SYMBOLS, model2)
-    print("signal:", signal)
-    print("stop loss:", stop_loss)
-    print("take profit:", take_profit)
-    print("subtle predictions:", subtle_prediction)
-    print("prediction :", prediction)
-    print("proba:", proba)
-    print("attente de la prochaine heure")
-    await message.channel.send("Pour la devise SOL/EUR")
-    await message.channel.send("heure UTC (heure francaise -1)")
-    await message.channel.send(timer)
-    if signal != "neutre":
-        await message.channel.send("signal:")
-        await message.channel.send(signal)
-        await message.channel.send("stop_loss:")
-        await message.channel.send(stop_loss)
-        await message.channel.send("take profit:")
-        await message.channel.send(take_profit)
-        await message.channel.send("proba")
-        await message.channel.send(proba)
-        await message.channel.send("rien a afficher")
+    await message.channel.send("historique")
+    await message.channel.send(predictions_finales)
+async def run_training_loop():
+    while True:
+        test_model(model)  # Assure-toi que 'model' est bien défini et accessible
+        await asyncio.sleep(60)  # Pause de 60 secondes avant de recommencer l'entraînement
+def start_training_in_background():
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    loop.run_until_complete(run_training_loop())
 
+# Lancer l'entraînement dans un thread séparé
+def start_training_thread():
+    training_thread = threading.Thread(target=start_training_in_background)
+    training_thread.daemon = True  # Assure-toi que le thread se termine quand le programme principal se termine
+    training_thread.start()
+
+# Démarrage du bot et du thread d'entraînement en arrière-plan
 if __name__ == "__main__":
-    client.run(token=WEBHOOK_URL)
+    start_training_thread()  # Lancer l'entraînement en arrière-plan
+    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+    client.run(token=WEBHOOK_URL)  # Remplace WEBHOOK_URL par ton vrai token
