@@ -250,5 +250,4 @@ def start_training_thread():
 # Démarrage du bot et du thread d'entraînement en arrière-plan
 if __name__ == "__main__":
     start_training_thread()  # Lancer l'entraînement en arrière-plan
-    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
     client.run(token=WEBHOOK_URL)  # Remplace WEBHOOK_URL par ton vrai token
