@@ -27,7 +27,7 @@ def keep_alive():
 load_dotenv()
 
 
-exchange = ccxt.binanceus()
+exchange = ccxt.binance()
 
 # Paramètres
 SYMBOLS = "SOL/EUR"
