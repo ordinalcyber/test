@@ -242,19 +242,19 @@ async def on_message(message):
     split_and_send_predictions(predictions_finales,message)
 def split_and_send_predictions(predictions_finales, channel):
     # Convertir la liste en une chaîne de caractères (JSON ou str)
-    predictions_str = json.dumps(predictions_finales)
+    predictions_str = str(predictions_finales)
 
     # Calculer la taille totale
     total_size = len(predictions_str)
     print(f"Taille totale des prédictions : {total_size} caractères")
 
     # Découper la chaîne en plusieurs morceaux de moins de 2000 caractères
-    chunks = [predictions_str[i:i + 2000] for i in range(0, total_size, 2000)]
+    chunks = [predictions_str[i:i + 1800] for i in range(0, total_size, 1800)]
 
     # Envoyer chaque morceau
     for i, chunk in enumerate(chunks):
         print(f"Envoi du message {i+1}/{len(chunks)}:")
-        channel.send(chunk)  # Envoi à un canal spécifiqu
+        channel.send(chunk)
 
 
 async def run_training_loop():
