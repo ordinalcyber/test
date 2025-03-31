@@ -13,7 +13,8 @@ import discord
 from discord.ext import commands
 import asyncio
 import threading
-
+import datetime
+import json
 app = Flask("")
 @app.route('/')
 def home() :
@@ -230,12 +231,40 @@ def test_model(model):
 async def on_message(message):
     if message.author.bot:
         return
-    await message.channel.send("historique")
-    await message.channel.send(predictions_finales)
+    split_and_send_predictions(predictions_finales,message)
+def split_and_send_predictions(predictions_finales, channel):
+    # Convertir la liste en une chaîne de caractères (JSON ou str)
+    predictions_str = json.dumps(predictions_finales)
+
+    # Calculer la taille totale
+    total_size = len(predictions_str)
+    print(f"Taille totale des prédictions : {total_size} caractères")
+
+    # Découper la chaîne en plusieurs morceaux de moins de 2000 caractères
+    chunks = [predictions_str[i:i + 2000] for i in range(0, total_size, 2000)]
+
+    # Envoyer chaque morceau
+    for i, chunk in enumerate(chunks):
+        print(f"Envoi du message {i+1}/{len(chunks)}:")
+        channel.send(chunk)  # Envoi à un canal spécifiqu
+
+
 async def run_training_loop():
     while True:
         test_model(model)  # Assure-toi que 'model' est bien défini et accessible
-        await asyncio.sleep(60)  # Pause de 60 secondes avant de recommencer l'entraînement
+        current_time = datetime.now()
+        current_minute = current_time.minute
+        verif = 0
+        while verif ==0:
+            # Attendre une seconde
+            time.sleep(1)
+
+            # Obtenir l'heure actuelle
+            new_time = datetime.now()
+
+            # Vérifier si la minute a changé
+            if new_time.minute != current_minute:
+                verif = 1
 def start_training_in_background():
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
