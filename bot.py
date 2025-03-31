@@ -13,7 +13,7 @@ import discord
 from discord.ext import commands
 import asyncio
 import threading
-import datetime
+from datetime import datetime
 import json
 app = Flask("")
 @app.route('/')
@@ -227,6 +227,14 @@ def test_model(model):
     predictions.append(stop_loss)
     print(predictions)
     predictions_finales.append(predictions)
+def convert_timestamps(predictions):
+    for pred in predictions:
+        pred["timestamp"] = pred["timestamp"].strftime('%Y-%m-%d %H:%M:%S')  # Formater le timestamp
+    return predictions
+
+# Convertir les timestamps avant la sérialisation
+predictions_finales = convert_timestamps(predictions_finales)
+
 @client.event
 async def on_message(message):
     if message.author.bot:
