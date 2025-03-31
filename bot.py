@@ -260,19 +260,7 @@ def split_and_send_predictions(predictions_finales, channel):
 async def run_training_loop():
     while True:
         test_model(model)  # Assure-toi que 'model' est bien défini et accessible
-        current_time = datetime.now()
-        current_minute = current_time.minute
-        verif = 0
-        while verif ==0:
-            # Attendre une seconde
-            time.sleep(1)
-
-            # Obtenir l'heure actuelle
-            new_time = datetime.now()
-
-            # Vérifier si la minute a changé
-            if new_time.minute != current_minute:
-                verif = 1
+        time.sleep(60)
 def start_training_in_background():
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
