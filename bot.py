@@ -152,7 +152,7 @@ def analyze_market(df, rsi_series, symbol, model):
  })
  # Système de confiance avec un seul seuil
  proba = model.predict_proba(features)[0]
- if max(proba) > 0.6:  # Seuil unique à 53%
+ if max(proba) > 0.55:  # Seuil unique à 53%
   prediction = np.argmax(proba)
   confidence_factor = max(proba)  # Utilisé pour ajuster les seuils
  else:
@@ -173,7 +173,7 @@ def analyze_market(df, rsi_series, symbol, model):
   atr = df["true_range"].rolling(window=14).mean().iloc[-1]  # ATR 14 périodes
 
   # Ajustement dynamique plus faible
-  atr_dynamic_factor = 0.5  # 🔥 Facteur ATR réduit
+  atr_dynamic_factor = 0.4  # 🔥 Facteur ATR réduit
 
   # 🟢 2. Calcul des Supports et Résistances (20 dernières bougies)
   support = df["low"].rolling(window=20).min().iloc[-1]
@@ -183,7 +183,7 @@ def analyze_market(df, rsi_series, symbol, model):
   dernier_prix = df["close"].iloc[-1]
 
   # 🔥 Ratio Risk-Reward réduit
-  risk_reward_ratio = 2
+  risk_reward_ratio = 1.25
 
   # 🟢 3. Calcul du Stop-Loss et du Take-Profit (plus serré)
   stop_loss = max(support, dernier_prix - (atr * atr_dynamic_factor * risk_reward_ratio * confidence_factor))
