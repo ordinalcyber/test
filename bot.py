@@ -257,11 +257,10 @@ async def run_training_loop():
  while True:
   test_model(model)  # Assure-toi que 'model' est bien défini et accessible
   await asyncio.sleep(60)  # Pause de 60 secondes avant de recommencer l'entraînement
-
-  def start_training_in_background():
-   loop = asyncio.new_event_loop()
-   asyncio.set_event_loop(loop)
-   loop.run_until_complete(run_training_loop())
+def start_training_in_background():
+  loop = asyncio.new_event_loop()
+  asyncio.set_event_loop(loop)
+  loop.run_until_complete(run_training_loop())
 
 
 # Lancer l'entraînement dans un thread séparé
