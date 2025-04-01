@@ -233,23 +233,64 @@ def test_model(model):
 
  timer = df_all["timestamp"].iloc[-1]
  close = df_all["close"].iloc[-1]
+ high = df_all["high"].iloc[-1]
+ low = df_all["low"].iloc[-1]
  rsi_window = calculate_rsi(fetch_ohlcv(SYMBOLS, TIMEFRAME, WINDOW_OHLCV))
  signal, trend_pct, stop_loss, take_profit, subtle_prediction, prediction, proba = analyze_market(
   df_all, rsi_window, SYMBOLS, model)
  predictions.append(timer)
- predictions.append(signal)
- predictions.append(proba)
+ predictions.append(close)
+ predictions.append(high)
+ predictions.append(low)
  predictions.append(take_profit)
  predictions.append(stop_loss)
+ predictions.append(prediction)
  print(predictions)
  predictions_finales.append(predictions)
 
+def calcul_reussite():
+ resultat_gagnant = 0
+ resultat_perdant = 0
+ total_resultat =0
+ for i in range(len(predictions_finales)-2):
+  prediction = predictions_finales[i][6]
+  next_high = predictions_finales[i+1][2]
+  next_next_high = predictions_finales[i+2][2]
+  next_low = predictions_finales[i + 1][3]
+  next_next_low = predictions_finales[i + 2][3]
+  take_profit = predictions_finales[i][4]
+  stop_loss = predictions_finales[i][5]
+  if prediction == 1:
+   if take_profit is not None and stop_loss is not None:
+    if next_high >= take_profit:
+     resultat_gagnant +=1
+     total_resultat +=1
+    elif next_next_high >= take_profit:
+      resultat_gagnant += 1
+      total_resultat += 1
+    elif next_low <= stop_loss:
+     resultat_perdant += 1
+     total_resultat += 1
+    elif next_next_low <= stop_loss:
+     resultat_perdant += 1
+     total_resultat += 1
+    else:
+     total_resultat += 1
+ pourcentage_gagnant = resultat_gagnant/total_resultat *100
+ pourcentage_perdant = resultat_perdant/total_resultat *100
+ pourcentage_neutre = (total_resultat-resultat_gagnant-resultat_perdant)/total_resultat *100
+ return pourcentage_gagnant,pourcentage_perdant,pourcentage_neutre
 @client.event
 async def on_message(message):
  if message.author.bot:
   return
- for prediction in predictions_finales:
-   await message.channel.send(prediction)
+ pourcentage_gagnant,pourcentage_perdant,pourcentage_neutre = calcul_reussite()
+ await message.channel.send("pourcentage gagnant : ")
+ await message.channel.send(pourcentage_gagnant)
+ await message.channel.send("pourcentage perdant : ")
+ await message.channel.send(pourcentage_perdant)
+ await message.channel.send("pourcentage_neutre : ")
+ await message.channel.send(pourcentage_neutre)
 
 
 async def run_training_loop():
