@@ -266,8 +266,8 @@ def decouper_texte(texte, taille_max=1900):
 async def on_message(message):
  if message.author.bot:
   return
- for prediction in predictions_finales:
-  morceaux = decouper_texte(prediction)
+
+  morceaux = decouper_texte(predictions_finales)
   for morceau in morceaux:
    await message.channel.send("historique")
    await message.channel.send(predictions_finales)
