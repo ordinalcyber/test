@@ -270,7 +270,7 @@ async def on_message(message):
   morceaux = decouper_texte(predictions_finales)
   for morceau in morceaux:
    await message.channel.send("historique")
-   await message.channel.send(predictions_finales)
+   await message.channel.send(morceau)
 
 
 async def run_training_loop():
