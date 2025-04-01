@@ -295,7 +295,7 @@ async def on_message(message):
  await message.channel.send(resultat_gagnant)
  await message.channel.send("nombre perdant : ")
  await message.channel.send(resultat_perdant)
- await message.channel.send("nombre neutre : ")
+ await message.channel.send("nombre total : ")
  await message.channel.send(total_resultat)
 
 
