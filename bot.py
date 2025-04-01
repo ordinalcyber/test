@@ -244,34 +244,12 @@ def test_model(model):
  print(predictions)
  predictions_finales.append(predictions)
 
-
-def decouper_texte(texte, taille_max=1900):
-    """
- Divise le texte en plusieurs morceaux de moins de taille_max caractères.
- """
-    morceaux = []
-    while len(texte) > taille_max:
-        # Chercher la dernière espace avant la taille maximale
-        idx = texte.rfind(' ', 0, taille_max)
-        if idx == -1:  # Si aucun espace n'est trouvé, couper à la taille_max
-            morceaux.append(texte[:taille_max])
-            texte = texte[taille_max:]
-        else:
-            morceaux.append(texte[:idx])
-            texte = texte[idx + 1:]
-    morceaux.append(texte)  # Ajouter le reste du texte
-    return morceaux
-
-for prediction in predictions_finales:
-        # Découper la prédiction en morceaux de 1900 caractères maximum
-        while len(prediction) > 1900:
-            # Trouver le dernier espace avant la limite de 1900 caractères
-            idx = prediction.rfind(' ', 0, 1900)
-            if idx == -1:
-                idx = 1900  # Si aucun espace n'est trouvé, couper à la limite
-            await message.channel.send(prediction[:idx])  # Envoyer le morceau
-            prediction = prediction[idx:].lstrip()  # Reste du texte après la coupe
-        await message.channel.send(prediction)  # Envoyer le dernier morceau (moins de 1900 caractères)
+@client.event
+async def on_message(message):
+ if message.author.bot:
+  return
+ for prediction in predictions_finales:
+   await message.channel.send(prediction)
 
 
 async def run_training_loop():
