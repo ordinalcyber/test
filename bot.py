@@ -245,12 +245,32 @@ def test_model(model):
  predictions_finales.append(predictions)
 
 
+def decouper_texte(texte, taille_max=1900):
+    """
+ Divise le texte en plusieurs morceaux de moins de taille_max caractères.
+ """
+    morceaux = []
+    while len(texte) > taille_max:
+        # Chercher la dernière espace avant la taille maximale
+        idx = texte.rfind(' ', 0, taille_max)
+        if idx == -1:  # Si aucun espace n'est trouvé, couper à la taille_max
+            morceaux.append(texte[:taille_max])
+            texte = texte[taille_max:]
+        else:
+            morceaux.append(texte[:idx])
+            texte = texte[idx + 1:]
+    morceaux.append(texte)  # Ajouter le reste du texte
+    return morceaux
+
 @client.event
 async def on_message(message):
  if message.author.bot:
   return
- await message.channel.send("historique")
- await message.channel.send(predictions_finales)
+ for prediction in predictions_finales:
+  morceaux = decouper_texte(prediction)
+  for morceau in morceaux:
+   await message.channel.send("historique")
+   await message.channel.send(predictions_finales)
 
 
 async def run_training_loop():
