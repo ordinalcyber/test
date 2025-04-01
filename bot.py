@@ -279,18 +279,24 @@ def calcul_reussite():
  pourcentage_gagnant = resultat_gagnant/total_resultat *100
  pourcentage_perdant = resultat_perdant/total_resultat *100
  pourcentage_neutre = (total_resultat-resultat_gagnant-resultat_perdant)/total_resultat *100
- return pourcentage_gagnant,pourcentage_perdant,pourcentage_neutre
+ return pourcentage_gagnant,pourcentage_perdant,pourcentage_neutre,resultat_gagnant,resultat_perdant,total_resultat
 @client.event
 async def on_message(message):
  if message.author.bot:
   return
- pourcentage_gagnant,pourcentage_perdant,pourcentage_neutre = calcul_reussite()
+ pourcentage_gagnant,pourcentage_perdant,pourcentage_neutre,resultat_gagnant,resultat_perdant,total_resultat = calcul_reussite()
  await message.channel.send("pourcentage gagnant : ")
  await message.channel.send(pourcentage_gagnant)
  await message.channel.send("pourcentage perdant : ")
  await message.channel.send(pourcentage_perdant)
  await message.channel.send("pourcentage_neutre : ")
  await message.channel.send(pourcentage_neutre)
+ await message.channel.send("nombre gagnant : ")
+ await message.channel.send(resultat_gagnant)
+ await message.channel.send("nombre perdant : ")
+ await message.channel.send(resultat_perdant)
+ await message.channel.send("nombre neutre : ")
+ await message.channel.send(total_resultat)
 
 
 async def run_training_loop():
