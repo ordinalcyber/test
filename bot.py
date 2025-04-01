@@ -262,13 +262,16 @@ def decouper_texte(texte, taille_max=1900):
     morceaux.append(texte)  # Ajouter le reste du texte
     return morceaux
 
-@client.event
-async def on_message(message):
- if message.author.bot:
-  return
- await message.channel.send("historique")
- for prediction in predictions_finales: 
-   await message.channel.send(prediction)
+for prediction in predictions_finales:
+        # Découper la prédiction en morceaux de 1900 caractères maximum
+        while len(prediction) > 1900:
+            # Trouver le dernier espace avant la limite de 1900 caractères
+            idx = prediction.rfind(' ', 0, 1900)
+            if idx == -1:
+                idx = 1900  # Si aucun espace n'est trouvé, couper à la limite
+            await message.channel.send(prediction[:idx])  # Envoyer le morceau
+            prediction = prediction[idx:].lstrip()  # Reste du texte après la coupe
+        await message.channel.send(prediction)  # Envoyer le dernier morceau (moins de 1900 caractères)
 
 
 async def run_training_loop():
