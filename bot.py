@@ -39,7 +39,7 @@ exchange = ccxt.binance()
 SYMBOLS = "SOL/EUR"
 TIMEFRAME = "1m"
 WINDOW_OHLCV = 200  # Pour les prédictions dans analyze_market
-LIMIT_TRAIN = 1000  # Pour l’entraînement et test total
+LIMIT_TRAIN = 200  # Pour l’entraînement et test total
 WEBHOOK_URL = os.getenv('WEBHOOK_URL')
 
 
