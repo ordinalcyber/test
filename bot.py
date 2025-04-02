@@ -214,7 +214,7 @@ intents = discord.Intents.all()
 bot = commands.Bot(command_prefix="$", intents=intents)
 predictions_finales = []
 model = XGBClassifier()
-model.load_model('model_solana_eur.json')
+model.load_model('model_solana_eur_minute.json')
 
 
 def test_model(model):
