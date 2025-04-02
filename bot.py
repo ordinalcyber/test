@@ -280,6 +280,9 @@ def calcul_reussite():
   pourcentage_gagnant = 0
   pourcentage_perdant = 0
   pourcentage_neutre = 0
+  resultat_gagnant = 0
+  resultat_perdant = 0
+  total_resultat = 0
  else:
   pourcentage_gagnant = resultat_gagnant/total_resultat *100
   pourcentage_perdant = resultat_perdant/total_resultat *100
