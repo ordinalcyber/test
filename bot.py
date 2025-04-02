@@ -14,7 +14,7 @@ import asyncio
 import threading
 import requests
 app = Flask("")
-URL = "https://test-678l.onrender.com"
+URL = "https://test-lffy.onrender.com"
 
 @app.route('/')
 def home():
@@ -276,9 +276,12 @@ def calcul_reussite():
      total_resultat += 1
     else:
      total_resultat += 1
- pourcentage_gagnant = resultat_gagnant/total_resultat *100
- pourcentage_perdant = resultat_perdant/total_resultat *100
- pourcentage_neutre = (total_resultat-resultat_gagnant-resultat_perdant)/total_resultat *100
+ if total_resultat == 0:
+  return
+ else: 
+  pourcentage_gagnant = resultat_gagnant/total_resultat *100
+  pourcentage_perdant = resultat_perdant/total_resultat *100
+  pourcentage_neutre = (total_resultat-resultat_gagnant-resultat_perdant)/total_resultat *100
  return pourcentage_gagnant,pourcentage_perdant,pourcentage_neutre,resultat_gagnant,resultat_perdant,total_resultat
 @client.event
 async def on_message(message):
@@ -301,7 +304,7 @@ async def on_message(message):
 
 async def run_training_loop():
  while True:
-  test_model(model) 
+  test_model(model)
   response = requests.get(URL)
   await asyncio.sleep(60)  # Pause de 60 secondes avant de recommencer l'entraînement
 def start_training_in_background():
