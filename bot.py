@@ -303,7 +303,6 @@ async def run_training_loop():
  while True:
   test_model(model) 
   response = requests.get(URL)
-  print(f"Ping {URL} -> Statut : {response.status_code}")# Assure-toi que 'model' est bien défini et accessible
   await asyncio.sleep(60)  # Pause de 60 secondes avant de recommencer l'entraînement
 def start_training_in_background():
   loop = asyncio.new_event_loop()
