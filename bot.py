@@ -14,7 +14,7 @@ import asyncio
 import threading
 import requests
 app = Flask("")
-URL = "https://test-lffy.onrender.com"
+URL = "https://test-678l.onrender.com"
 
 @app.route('/')
 def home():
@@ -277,8 +277,10 @@ def calcul_reussite():
     else:
      total_resultat += 1
  if total_resultat == 0:
-  return
- else: 
+  pourcentage_gagnant = 0
+  pourcentage_perdant = 0
+  pourcentage_neutre = 0
+ else:
   pourcentage_gagnant = resultat_gagnant/total_resultat *100
   pourcentage_perdant = resultat_perdant/total_resultat *100
   pourcentage_neutre = (total_resultat-resultat_gagnant-resultat_perdant)/total_resultat *100
