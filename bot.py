@@ -14,7 +14,7 @@ import asyncio
 import threading
 import requests
 app = Flask("")
-URL = "https://test-678l.onrender.com"
+URL = "https://test-zpdc.onrender.com"
 
 @app.route('/')
 def home():
