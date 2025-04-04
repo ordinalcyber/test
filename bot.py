@@ -38,8 +38,8 @@ exchange = ccxt.binance()
 # Paramètres
 SYMBOLS = "SOL/EUR"
 TIMEFRAME = "1m"
-WINDOW_OHLCV = 200  # Pour les prédictions dans analyze_market
-LIMIT_TRAIN = 200  # Pour l’entraînement et test total
+WINDOW_OHLCV = 250  # Pour les prédictions dans analyze_market
+LIMIT_TRAIN = 250  # Pour l’entraînement et test total
 WEBHOOK_URL = os.getenv('WEBHOOK_URL')
 
 
@@ -176,7 +176,7 @@ def analyze_market(df, rsi_series, symbol, model):
   atr = df["true_range"].rolling(window=14).mean().iloc[-1]  # ATR 14 périodes
 
   # Ajustement dynamique plus faible
-  atr_dynamic_factor = 0.4  # 🔥 Facteur ATR réduit
+  atr_dynamic_factor = 0.5  # 🔥 Facteur ATR réduit
 
   # 🟢 2. Calcul des Supports et Résistances (20 dernières bougies)
   support = df["low"].rolling(window=20).min().iloc[-1]
