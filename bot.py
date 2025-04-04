@@ -426,6 +426,6 @@ async def train_start():
     print("mise a jour terminer")
 # Démarrage du bot et du thread d'entraînement en arrière-plan
 if __name__ == "__main__":
- await train_start()
+ asyncio.run(train_start())
  start_training_thread()  # Lancer l'entraînement en arrière-plan
  client.run(token=WEBHOOK_URL)  # Remplace WEBHOOK_URL par ton vrai token
