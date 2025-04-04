@@ -13,6 +13,7 @@ from discord.ext import commands
 import asyncio
 import threading
 import requests
+from datetime import timedelta
 app = Flask("")
 URL = "https://test-zpdc.onrender.com"
 
@@ -45,19 +46,56 @@ WEBHOOK_URL = os.getenv('WEBHOOK_URL')
 
 # Récupération des données OHLCV
 def fetch_ohlcv(symbol, timeframe, limit):
- all_ohlcv = []
- total_periods = limit
- max_per_call = 1000
- while len(all_ohlcv) < total_periods:
-  try:
-   ohlcv = exchange.fetch_ohlcv(symbol, timeframe, limit=min(max_per_call, total_periods - len(all_ohlcv)))
-   all_ohlcv.extend(ohlcv)
-   time.sleep(1)
-  except:
-   time.sleep(60)
- df = pd.DataFrame(all_ohlcv, columns=["timestamp", "open", "high", "low", "close", "volume"])
- df["timestamp"] = pd.to_datetime(df["timestamp"], unit="ms")
- return df.tail(total_periods)
+    all_ohlcv = []
+    a = 0
+    max_per_call = 1000
+
+    # Déterminer la date de départ (actuelle moins 50 000 minutes)
+    now = pd.to_datetime("now")
+    since = (now - timedelta(minutes=limit)).timestamp()  # Conversion en secondes
+    since = int(since) * 1000
+    while len(all_ohlcv) <= limit - 1:
+        a = a + 1
+        remaining = limit - len(all_ohlcv)
+        fetch_limit = min(max_per_call, remaining)
+
+        # Récupération des bougies
+        ohlcv = exchange.fetch_ohlcv(symbol, timeframe, since=since, limit=fetch_limit)
+        print(f"Récupéré {len(ohlcv)} bougies.")
+
+        # Si des doublons sont détectés, on les supprime
+        try:
+            if len(all_ohlcv) > 0 and len(ohlcv) > 0 and ohlcv[0][0] <= all_ohlcv[-1][0]:
+                print("⚠️ Doublon détecté, suppression du premier élément.")
+                ohlcv = ohlcv[1:]  # Retirer le doublon
+
+            if len(ohlcv) > 0:
+                since = ohlcv[-1][0] + 1  # Met à jour la valeur de `since` pour le prochain appel
+            else:
+                since = None  # Si aucune donnée n'a été récupérée, on arrête la boucle
+
+        except Exception as e:
+            print(f"Problème lors du traitement : {e}")
+            break
+
+        if len(ohlcv) == 0:
+            print("Aucune donnée récupérée, arrêt de la boucle.")
+            break  # Si aucune donnée n'est récupérée, on arrête
+
+        # Ajout des données récupérées à la liste
+        all_ohlcv.extend(ohlcv)
+        print(f"Total des bougies récupérées : {len(all_ohlcv)}")
+
+        # Si on atteint la limite, on arrête la boucle
+        if len(all_ohlcv) >= limit:
+            print("Limite atteinte.")
+            break
+
+    # Transformation en DataFrame
+    df = pd.DataFrame(all_ohlcv, columns=["timestamp", "open", "high", "low", "close", "volume"])
+    df["timestamp"] = pd.to_datetime(df["timestamp"], unit="ms")
+    return df.tail(limit)
+
 
 
 # Calcul du RSI
@@ -116,7 +154,55 @@ def calculate_atr(df, window=14):
                  np.abs(df["low"] - df["close"].shift())], axis=1).max(axis=1)
  return tr.rolling(window=window).mean()
 
+async def train_ml_model():
+    # Calcul des features
+    df = fetch_ohlcv(SYMBOLS,TIMEFRAME,50000)
+    features = pd.DataFrame({
+        "rsi": calculate_rsi(df),
+        "ema_diff": calculate_ema(df, 10) - calculate_ema(df, 50),
+        "macd_diff": calculate_macd(df)[0] - calculate_macd(df)[1],
+        "momentum": df["close"].pct_change(periods=10) * 100,
+        "volume_rel": df["volume"] / df["volume"].rolling(window=20).mean(),
+        "moving_average": calculate_moving_average(df),
+        "atr": calculate_atr(df),
+        "volume_change": df["volume"].pct_change(periods=1) * 100,
+        "ema_200": calculate_ema(df, 200),
+        "ema_100": calculate_ema(df, 100),
+        "ema_10": calculate_ema(df, 10),
+        "ema_50": calculate_ema(df, 50),
+        "close_pct_change_5": df["close"].pct_change(periods=5) * 100  # Nouvelle feature
+    }).dropna()
 
+    # Remplacer les valeurs infinies ou NaN par des valeurs par défaut (par exemple, la moyenne ou la médiane)
+    features.replace([np.inf, -np.inf], np.nan, inplace=True)  # Remplacer les inf par NaN
+    features.fillna(features.mean(), inplace=True)  # Remplacer les NaN par la moyenne des colonnes
+
+    # Ciblage pour prédiction (Next Close > Close actuel = 1 ou non)
+    target = (df["close"].shift(-1) > df["close"]).astype(int).reindex(features.index).dropna()
+    features = features.iloc[:-1]
+    target = target.iloc[:-1]
+
+    if len(features) != len(target) or len(features) < 1:
+        print(f"Données insuffisantes ou incohérentes pour l’entraînement: features={len(features)}, target={len(target)}")
+        return None
+
+    # Initialisation du modèle XGBClassifier
+    model = XGBClassifier(
+        n_estimators=1000,
+        max_depth=3,
+        learning_rate=0.01,
+        subsample=0.9,
+        colsample_bytree=0.7,
+        random_state=42,
+        min_child_weight=7,
+        booster="dart"
+    )
+
+    # Entraînement du modèle
+    model.fit(features, target)
+    print("Equilibre des classes :", target.value_counts(normalize=True))  # Vérifie l'équilibre des classes
+    time.sleep(30)
+    return model
 # Analyse et décision avec vérification
 def analyze_market(df, rsi_series, symbol, model):
  if df.empty or rsi_series.empty or model is None:
@@ -216,8 +302,7 @@ client = discord.Client(intents=discord.Intents.all())
 intents = discord.Intents.all()
 bot = commands.Bot(command_prefix="$", intents=intents)
 predictions_finales = []
-model = XGBClassifier()
-model.load_model('model_solana_eur_minute.json')
+
 
 
 def test_model(model):
@@ -309,9 +394,10 @@ async def on_message(message):
  await message.channel.send("nombre total : ")
  await message.channel.send(total_resultat)
 
-
+model = train_ml_model()
 async def run_training_loop():
  while True:
+
   test_model(model)
   response = requests.get(URL)
   await asyncio.sleep(60)  # Pause de 60 secondes avant de recommencer l'entraînement
