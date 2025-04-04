@@ -1,10 +1,9 @@
-import asyncio
 import ccxt
 import pandas as pd
 import numpy as np
 from xgboost import XGBClassifier
-import time
 import os
+import time
 from dotenv import load_dotenv
 from flask import Flask
 from threading import Thread
@@ -170,9 +169,7 @@ def calculate_indicators(df):
     df["ema_200"] = calculate_ema(df, 200)
     df["close_pct_change_5"] = df["close"].pct_change(periods=5) * 100
     return df
-async def train_ml_model():
-    global model, feature_order
-
+def train_ml_model():
     print("⏳ Téléchargement des données OHLCV...")
     df = fetch_ohlcv(SYMBOLS, TIMEFRAME, 50000)
     if df.empty:
@@ -220,9 +217,8 @@ async def train_ml_model():
         missing=np.nan
     )
     model.fit(features, target)
-
-    feature_order = features.columns.tolist()
     print("✅ Modèle entraîné avec succès.")
+    return model
 # Analyse et décision avec vérification
 def analyze_market(df, rsi_series, symbol, model):
  if df.empty or rsi_series.empty or model is None:
@@ -401,25 +397,16 @@ async def on_message(message):
  if message.author.bot:
   return
  pourcentage_gagnant,pourcentage_perdant,pourcentage_neutre,resultat_gagnant,resultat_perdant,total_resultat = calcul_reussite()
- await message.channel.send("pourcentage gagnant : ")
- await message.channel.send(pourcentage_gagnant)
- await message.channel.send("pourcentage perdant : ")
- await message.channel.send(pourcentage_perdant)
- await message.channel.send("pourcentage_neutre : ")
- await message.channel.send(pourcentage_neutre)
- await message.channel.send("nombre gagnant : ")
- await message.channel.send(resultat_gagnant)
- await message.channel.send("nombre perdant : ")
- await message.channel.send(resultat_perdant)
- await message.channel.send("nombre total : ")
- await message.channel.send(total_resultat)
+ await message.channel.send(f"✅ Gagnants: {pourcentage_gagnant:.2f}% ({resultat_gagnant})\n❌ Perdants: {pourcentage_perdant:.2f}% ({resultat_perdant})\n❓ Neutres: {pourcentage_neutre:.2f}%\nTotal: {total_resultat}")
 
-model = train_ml_model()
+
+model = XGBClassifier()
+model.load_model('model_solana_eur_minute.json')
+
 async def run_training_loop():
  while True:
-
   test_model(model)
-  response = requests.get(URL)
+  requests.get(URL)
   await asyncio.sleep(60)  # Pause de 60 secondes avant de recommencer l'entraînement
 def start_training_in_background():
   loop = asyncio.new_event_loop()
@@ -433,8 +420,12 @@ def start_training_thread():
  training_thread.daemon = True  # Assure-toi que le thread se termine quand le programme principal se termine
  training_thread.start()
 
-
+async def train_start():
+    model = train_ml_model()
+    time.sleep(120)
+    print("mise a jour terminer")
 # Démarrage du bot et du thread d'entraînement en arrière-plan
 if __name__ == "__main__":
+ train_start()
  start_training_thread()  # Lancer l'entraînement en arrière-plan
  client.run(token=WEBHOOK_URL)  # Remplace WEBHOOK_URL par ton vrai token
