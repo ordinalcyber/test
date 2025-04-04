@@ -49,9 +49,12 @@ def fetch_ohlcv(symbol, timeframe, limit):
  total_periods = limit
  max_per_call = 1000
  while len(all_ohlcv) < total_periods:
-  ohlcv = exchange.fetch_ohlcv(symbol, timeframe, limit=min(max_per_call, total_periods - len(all_ohlcv)))
-  all_ohlcv.extend(ohlcv)
-  time.sleep(1)
+  try:
+   ohlcv = exchange.fetch_ohlcv(symbol, timeframe, limit=min(max_per_call, total_periods - len(all_ohlcv)))
+   all_ohlcv.extend(ohlcv)
+   time.sleep(1)
+  except:
+   time.sleep(60)
  df = pd.DataFrame(all_ohlcv, columns=["timestamp", "open", "high", "low", "close", "volume"])
  df["timestamp"] = pd.to_datetime(df["timestamp"], unit="ms")
  return df.tail(total_periods)
