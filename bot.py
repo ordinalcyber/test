@@ -106,24 +106,61 @@ def calculate_atr(df, window=14):
     return tr.rolling(window).mean()
 
 # === ENTRAÎnment ===
+# === ENTRAÎNEMENT ===
 async def train_ml_model():
     global model, feature_order
+
+    print("⏳ Téléchargement des données OHLCV...")
     df = fetch_ohlcv(SYMBOLS, TIMEFRAME, 50000)
-    df = calculate_indicators(df)
-    df.dropna(inplace=True)
     if df.empty:
-        print("Pas assez de données pour entraîner.")
+        print("❌ Données OHLCV vides.")
         return
+
+    print("📊 Calcul des indicateurs...")
+    df = calculate_indicators(df)
+
+    print("🔍 Vérification des NaN / inf avant nettoyage...")
+    print(" - NaN:", df.isna().sum().sum())
+    print(" - Inf:", np.isinf(df.select_dtypes(include=[np.number])).sum().sum())
+
+    # Nettoyage des données
+    df.replace([np.inf, -np.inf], np.nan, inplace=True)
+    df.dropna(inplace=True)
+
+    if df.empty:
+        print("❌ Pas assez de données après nettoyage.")
+        return
+
+    # Features & target
     features = df[[
         "rsi", "ema_diff", "macd_diff", "momentum", "volume_rel", "moving_average",
         "atr", "volume_change", "ema_200", "ema_100", "ema_10", "ema_50", "close_pct_change_5"
     ]]
     target = (df["close"].shift(-1) > df["close"]).astype(int)
+
     features, target = features.iloc[:-1], target.iloc[:-1]
-    model = XGBClassifier(n_estimators=300, max_depth=4, learning_rate=0.03)
+
+    # Nouvelle vérification pour s'assurer qu'il n'y a plus de valeurs incorrectes
+    if np.isinf(features.to_numpy()).any() or np.isnan(features.to_numpy()).any():
+        print("❌ Les données contiennent encore des valeurs invalides après nettoyage.")
+        return
+
+    print("✅ Données prêtes. Entraînement du modèle...")
+
+    # Entraînement du modèle
+    model = XGBClassifier(
+        n_estimators=300,
+        max_depth=4,
+        learning_rate=0.03,
+        use_label_encoder=False,
+        eval_metric="logloss",
+        missing=np.nan
+    )
     model.fit(features, target)
+
     feature_order = features.columns.tolist()
-    print("Modèle entraîné avec succès.")
+    print("✅ Modèle entraîné avec succès.")
+
 
 # === TEST DU MODÈLE ===
 def test_model():
