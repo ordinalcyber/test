@@ -32,8 +32,8 @@ def keep_alive():
 
 
 load_dotenv()
-model_de_base = XGBClassifier()
-model_de_base.load_model('model_solana_eur_minute.json')
+model = XGBClassifier()
+model.load_model('model_solana_eur_minute.json')
 
 exchange = ccxt.binance()
 
@@ -203,9 +203,9 @@ def train_ml_model(df):
     if len(features) != len(target) or len(features) < 1:
         print(f"Données insuffisantes ou incohérentes pour l’entraînement: features={len(features)}, target={len(target)}")
         return None
-    existing_model = model_de_base
+    existing_model = model
     model = existing_model
-    model.fit(features, target, xgb_model=model_de_base)  # Mise à jour du modèle
+    model.fit(features, target, xgb_model=model)  # Mise à jour du modèle
     print("Modèle mis à jour avec de nouvelles données!")
     return model
 
