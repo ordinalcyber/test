@@ -15,7 +15,7 @@ import requests
 from datetime import timedelta
 app = Flask("")
 URL = "https://test-zpdc.onrender.com"
-model  = train_ml_model() 
+
 @app.route('/')
 def home():
  return "le bot est en ligne"
@@ -39,7 +39,7 @@ exchange = ccxt.binance()
 SYMBOLS = "SOL/EUR"
 TIMEFRAME = "1m"
 WINDOW_OHLCV = 250  # Pour les prédictions dans analyze_market
-LIMIT_TRAIN = 50000 
+LIMIT_TRAIN = 50000
 LIMIT_TEST = 250# Pour l’entraînement et test total
 WEBHOOK_URL = os.getenv('WEBHOOK_URL')
 
@@ -428,7 +428,7 @@ def start_training_thread():
  training_thread = threading.Thread(target=start_background_tasks)
  training_thread.daemon = True  # Assure-toi que le thread se termine quand le programme principal se termine
  training_thread.start()
-
+model  = train_ml_model() 
 
 # Démarrage du bot et du thread d'entraînement en arrière-plan
 if __name__ == "__main__":
