@@ -258,7 +258,7 @@ def analyze_market(df, rsi_series, symbol, model):
  })
  # Système de confiance avec un seul seuil
  proba = model.predict_proba(features)[0]
- if max(proba) > 0.6:  # Seuil unique à 53%
+ if max(proba) > 0.53:  # Seuil unique à 53%
   prediction = np.argmax(proba)
   confidence_factor = max(proba)  # Utilisé pour ajuster les seuils
  else:
