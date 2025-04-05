@@ -32,16 +32,18 @@ def keep_alive():
 
 
 load_dotenv()
+model_de_base = XGBClassifier()
+model_de_base.load_model('model_solana_eur_minute.json')
 
 exchange = ccxt.binance()
 
 # Paramètres
 SYMBOLS = "SOL/EUR"
 TIMEFRAME = "1m"
-WINDOW_OHLCV = 250  # Pour les prédictions dans analyze_market
-LIMIT_TRAIN = 50000
+WINDOW_OHLCV = 200  # Pour les prédictions dans analyze_market
 LIMIT_TEST = 250# Pour l’entraînement et test total
 WEBHOOK_URL = os.getenv('WEBHOOK_URL')
+Rotation = 0
 
 
 # Récupération des données OHLCV
@@ -171,57 +173,42 @@ def calculate_indicators(df):
     df["ema_200"] = calculate_ema(df, 200)
     df["close_pct_change_5"] = df["close"].pct_change(periods=5) * 100
     return df
-def train_ml_model():
-    global model
-    print("⏳ Téléchargement des données OHLCV...")
-    df = fetch_ohlcv(SYMBOLS, TIMEFRAME, LIMIT_TRAIN)
-    if df.empty:
-        print("❌ Données OHLCV vides.")
-        return
+def train_ml_model(df):
+    # Calcul des features
+    features = pd.DataFrame({
+        "rsi": calculate_rsi(df),
+        "ema_diff": calculate_ema(df, 10) - calculate_ema(df, 50),
+        "macd_diff": calculate_macd(df)[0] - calculate_macd(df)[1],
+        "momentum": df["close"].pct_change(periods=10) * 100,
+        "volume_rel": df["volume"] / df["volume"].rolling(window=20).mean(),
+        "moving_average": calculate_moving_average(df),
+        "atr": calculate_atr(df),
+        "volume_change": df["volume"].pct_change(periods=1) * 100,
+        "ema_200": calculate_ema(df, 200),
+        "ema_100": calculate_ema(df, 100),
+        "ema_10": calculate_ema(df, 10),
+        "ema_50": calculate_ema(df, 50),
+        "close_pct_change_5": df["close"].pct_change(periods=5) * 100  # Nouvelle feature
+    }).dropna()
 
-    print("📊 Calcul des indicateurs...")
-    df = calculate_indicators(df)
+    # Remplacer les valeurs infinies ou NaN par des valeurs par défaut (par exemple, la moyenne ou la médiane)
+    features.replace([np.inf, -np.inf], np.nan, inplace=True)  # Remplacer les inf par NaN
+    features.fillna(features.mean(), inplace=True)  # Remplacer les NaN par la moyenne des colonnes
 
-    print("🔍 Vérification des NaN / inf avant nettoyage...")
-    print(" - NaN:", df.isna().sum().sum())
-    print(" - Inf:", np.isinf(df.select_dtypes(include=[np.number])).sum().sum())
+    # Ciblage pour prédiction (Next Close > Close actuel = 1 ou non)
+    target = (df["close"].shift(-1) > df["close"]).astype(int).reindex(features.index).dropna()
+    features = features.iloc[:-1]
+    target = target.iloc[:-1]
 
-    # Nettoyage des données
-    df.replace([np.inf, -np.inf], np.nan, inplace=True)
-    df.dropna(inplace=True)
-
-    if df.empty:
-        print("❌ Pas assez de données après nettoyage.")
-        return
-
-    # Features & target
-    features = df[[
-        "rsi", "ema_diff", "macd_diff", "momentum", "volume_rel", "moving_average",
-        "atr", "volume_change", "ema_200", "ema_100", "ema_10", "ema_50", "close_pct_change_5"
-    ]]
-    target = (df["close"].shift(-1) > df["close"]).astype(int)
-
-    features, target = features.iloc[:-1], target.iloc[:-1]
-
-    # Nouvelle vérification pour s'assurer qu'il n'y a plus de valeurs incorrectes
-    if np.isinf(features.to_numpy()).any() or np.isnan(features.to_numpy()).any():
-        print("❌ Les données contiennent encore des valeurs invalides après nettoyage.")
-        return
-
-    print("✅ Données prêtes. Entraînement du modèle...")
-
-    # Entraînement du modèle
-    model = XGBClassifier(
-        n_estimators=500,
-        max_depth=7,
-        learning_rate=0.05,
-        use_label_encoder=False,
-        eval_metric="logloss",
-        missing=np.nan
-    )
-    model.fit(features, target)
-    print("✅ Modèle entraîné avec succès.")
+    if len(features) != len(target) or len(features) < 1:
+        print(f"Données insuffisantes ou incohérentes pour l’entraînement: features={len(features)}, target={len(target)}")
+        return None
+    existing_model = model_de_base
+    model = existing_model
+    model.fit(features, target, xgb_model=model_de_base)  # Mise à jour du modèle
+    print("Modèle mis à jour avec de nouvelles données!")
     return model
+
 # Analyse et décision avec vérification
 def analyze_market(df, rsi_series, symbol, model):
  if df.empty or rsi_series.empty or model is None:
@@ -324,8 +311,16 @@ predictions_finales = []
 
 
 
-def test_model(model):
+def test_model():
+ global Rotation,model
  df_all = fetch_ohlcv(SYMBOLS, TIMEFRAME, LIMIT_TEST)
+ if Rotation == 100:
+  model = train_ml_model(df_all.iloc[-100])
+  Rotation = 0
+ else:
+  Rotation +=1
+
+
  if df_all.empty:
   print("Échec de la récupération des données historiques")
   return
@@ -394,6 +389,8 @@ def calcul_reussite():
   pourcentage_gagnant = resultat_gagnant/total_resultat *100
   pourcentage_perdant = resultat_perdant/total_resultat *100
   pourcentage_neutre = (total_resultat-resultat_gagnant-resultat_perdant)/total_resultat *100
+  print("🔁 Réentraînement du modèle...")
+
  return pourcentage_gagnant,pourcentage_perdant,pourcentage_neutre,resultat_gagnant,resultat_perdant,total_resultat
 @client.event
 async def on_message(message):
@@ -403,12 +400,7 @@ async def on_message(message):
  await message.channel.send(f"✅ Gagnants: {pourcentage_gagnant:.2f}% ({resultat_gagnant})\n❌ Perdants: {pourcentage_perdant:.2f}% ({resultat_perdant})\n❓ Neutres: {pourcentage_neutre:.2f}%\nTotal: {total_resultat}")
 
 
-async def run_training_loop():
-    global model
-    while True:
-        print("🔁 Réentraînement du modèle...")
-        model = train_ml_model()
-        await asyncio.sleep(timedelta(minutes=3600 * 24).total_seconds())  # ≈ 34 jours
+
 
 
 async def run_trading_loop():
@@ -429,7 +421,7 @@ def start_training_thread():
  training_thread = threading.Thread(target=start_background_tasks)
  training_thread.daemon = True  # Assure-toi que le thread se termine quand le programme principal se termine
  training_thread.start()
-model  = train_ml_model() 
+model  = train_ml_model()
 
 # Démarrage du bot et du thread d'entraînement en arrière-plan
 if __name__ == "__main__":
