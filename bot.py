@@ -175,6 +175,7 @@ def calculate_indicators(df):
     return df
 def train_ml_model(df):
     # Calcul des features
+    global model
     features = pd.DataFrame({
         "rsi": calculate_rsi(df),
         "ema_diff": calculate_ema(df, 10) - calculate_ema(df, 50),
