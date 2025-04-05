@@ -15,7 +15,7 @@ import requests
 from datetime import timedelta
 app = Flask("")
 URL = "https://test-zpdc.onrender.com"
-model = None 
+model  = train_ml_model() 
 @app.route('/')
 def home():
  return "le bot est en ligne"
