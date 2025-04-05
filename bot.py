@@ -171,6 +171,7 @@ def calculate_indicators(df):
     df["close_pct_change_5"] = df["close"].pct_change(periods=5) * 100
     return df
 def train_ml_model():
+    global model
     print("⏳ Téléchargement des données OHLCV...")
     df = fetch_ohlcv(SYMBOLS, TIMEFRAME, LIMIT_TRAIN)
     if df.empty:
@@ -424,7 +425,7 @@ def start_background_tasks():
 
 # Lancer l'entraînement dans un thread séparé
 def start_training_thread():
- training_thread = threading.Thread(target=start_background_tasks())
+ training_thread = threading.Thread(target=start_background_tasks)
  training_thread.daemon = True  # Assure-toi que le thread se termine quand le programme principal se termine
  training_thread.start()
 
