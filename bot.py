@@ -407,7 +407,7 @@ async def run_training_loop():
     while True:
         print("🔁 Réentraînement du modèle...")
         model = train_ml_model()
-        await asyncio.sleep(timedelta(minutes=50000).total_seconds())  # ≈ 34 jours
+        await asyncio.sleep(timedelta(minutes=3600 * 24).total_seconds())  # ≈ 34 jours
 
 
 async def run_trading_loop():
