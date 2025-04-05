@@ -417,8 +417,8 @@ async def run_trading_loop():
 def start_background_tasks():
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
-    loop.create_task(run_trading_loop())
     loop.create_task(run_training_loop())
+    loop.create_task(run_trading_loop())
     loop.run_forever()
 
 
