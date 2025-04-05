@@ -421,7 +421,6 @@ def start_training_thread():
  training_thread = threading.Thread(target=start_background_tasks)
  training_thread.daemon = True  # Assure-toi que le thread se termine quand le programme principal se termine
  training_thread.start()
-model  = train_ml_model()
 
 # Démarrage du bot et du thread d'entraînement en arrière-plan
 if __name__ == "__main__":
