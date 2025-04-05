@@ -39,7 +39,8 @@ exchange = ccxt.binance()
 SYMBOLS = "SOL/EUR"
 TIMEFRAME = "1m"
 WINDOW_OHLCV = 250  # Pour les prédictions dans analyze_market
-LIMIT_TRAIN = 50000  # Pour l’entraînement et test total
+LIMIT_TRAIN = 50000 
+LIMIT_TEST = 250# Pour l’entraînement et test total
 WEBHOOK_URL = os.getenv('WEBHOOK_URL')
 
 
@@ -171,7 +172,7 @@ def calculate_indicators(df):
     return df
 def train_ml_model():
     print("⏳ Téléchargement des données OHLCV...")
-    df = fetch_ohlcv(SYMBOLS, TIMEFRAME, 50000)
+    df = fetch_ohlcv(SYMBOLS, TIMEFRAME, LIMIT_TRAIN)
     if df.empty:
         print("❌ Données OHLCV vides.")
         return
@@ -322,7 +323,7 @@ predictions_finales = []
 
 
 def test_model(model):
- df_all = fetch_ohlcv(SYMBOLS, TIMEFRAME, LIMIT_TRAIN)
+ df_all = fetch_ohlcv(SYMBOLS, TIMEFRAME, LIMIT_TEST)
  if df_all.empty:
   print("Échec de la récupération des données historiques")
   return
