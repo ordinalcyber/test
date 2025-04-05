@@ -406,7 +406,7 @@ async def on_message(message):
 
 async def run_trading_loop():
  while True:
-  test_model(model)
+  test_model()
   requests.get(URL)
   await asyncio.sleep(60)  # Pause de 60 secondes avant de recommencer l'entraînement
 def start_background_tasks():
