@@ -62,6 +62,7 @@ def fetch_ohlcv(symbol, timeframe, limit):
         # Récupération des bougies
         ohlcv = exchange.fetch_ohlcv(symbol, timeframe, since=since, limit=fetch_limit)
         print(f"Récupéré {len(ohlcv)} bougies.")
+        time.sleep(1)
 
         # Si des doublons sont détectés, on les supprime
         try:
