@@ -400,32 +400,38 @@ async def on_message(message):
  await message.channel.send(f"✅ Gagnants: {pourcentage_gagnant:.2f}% ({resultat_gagnant})\n❌ Perdants: {pourcentage_perdant:.2f}% ({resultat_perdant})\n❓ Neutres: {pourcentage_neutre:.2f}%\nTotal: {total_resultat}")
 
 
-model = XGBClassifier()
-model.load_model('model_solana_eur_minute.json')
-
 async def run_training_loop():
+    global model
+    while True:
+        print("🔁 Réentraînement du modèle...")
+        model = train_ml_model()
+        await asyncio.sleep(timedelta(minutes=50000).total_seconds())  # ≈ 34 jours
+
+
+async def run_trading_loop():
  while True:
   test_model(model)
   requests.get(URL)
   await asyncio.sleep(60)  # Pause de 60 secondes avant de recommencer l'entraînement
-def start_training_in_background():
-  loop = asyncio.new_event_loop()
-  asyncio.set_event_loop(loop)
-  loop.run_until_complete(run_training_loop())
+def start_background_tasks():
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    loop.create_task(run_trading_loop())
+    loop.create_task(run_training_loop())
+    loop.run_forever()
 
 
 # Lancer l'entraînement dans un thread séparé
 def start_training_thread():
- training_thread = threading.Thread(target=start_training_in_background)
+ training_thread = threading.Thread(target=start_background_tasks())
  training_thread.daemon = True  # Assure-toi que le thread se termine quand le programme principal se termine
  training_thread.start()
 
-async def train_start():
-    model = train_ml_model()
-    time.sleep(120)
-    print("mise a jour terminer")
+
 # Démarrage du bot et du thread d'entraînement en arrière-plan
 if __name__ == "__main__":
- asyncio.run(train_start())
- start_training_thread()  # Lancer l'entraînement en arrière-plan
- client.run(token=WEBHOOK_URL)  # Remplace WEBHOOK_URL par ton vrai token
+    training_thread = threading.Thread(target=start_background_tasks)
+    training_thread.daemon = True
+    training_thread.start()
+
+    client.run(token=WEBHOOK_URL)
