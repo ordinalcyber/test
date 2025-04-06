@@ -316,7 +316,7 @@ def test_model():
  global Rotation,model
  df_all = fetch_ohlcv(SYMBOLS, TIMEFRAME, LIMIT_TEST)
  if Rotation == 100:
-  model = train_ml_model(df_all.iloc[-100])
+  model = train_ml_model(df_all.iloc[-100:])
   Rotation = 0
  else:
   Rotation +=1
