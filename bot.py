@@ -248,7 +248,7 @@ def analyze_market(df, rsi_series, symbol, model):
  })
  # Système de confiance avec un seul seuil
  proba = model.predict_proba(features)[0]
- if max(proba) > 0.5:  # Seuil unique à 53%
+ if max(proba) > 0.9:  # Seuil unique à 53%
   prediction = np.argmax(proba)
   confidence_factor = max(proba)  # Utilisé pour ajuster les seuils
  else:
@@ -355,12 +355,17 @@ def calcul_reussite():
  resultat_gagnant = 0
  resultat_perdant = 0
  total_resultat =0
- for i in range(len(predictions_finales)-2):
+ for i in range(len(predictions_finales)-4):
   prediction = predictions_finales[i][6]
   next_high = predictions_finales[i+1][2]
   next_next_high = predictions_finales[i+2][2]
+  next_high3 = predictions_finales[i + 3][2]
+  next_high4 = predictions_finales[i + 4][2]
+  
   next_low = predictions_finales[i + 1][3]
   next_next_low = predictions_finales[i + 2][3]
+  next_low3 = predictions_finales[i + 3][3]
+  next_low4 = predictions_finales[i + 4][3]
   take_profit = predictions_finales[i][4]
   stop_loss = predictions_finales[i][5]
   if prediction == 1:
@@ -368,15 +373,27 @@ def calcul_reussite():
     if next_high >= take_profit:
      resultat_gagnant +=1
      total_resultat +=1
-    elif next_next_high >= take_profit:
-      resultat_gagnant += 1
-      total_resultat += 1
     elif next_low <= stop_loss:
      resultat_perdant += 1
      total_resultat += 1
+    elif next_next_high >= take_profit:
+      resultat_gagnant += 1
+      total_resultat += 1
     elif next_next_low <= stop_loss:
      resultat_perdant += 1
      total_resultat += 1
+    elif next_high3 >= take_profit:
+     resultat_gagnant += 1
+     total_resultat += 1
+    elif next_low3 <= stop_loss:
+        resultat_perdant += 1
+        total_resultat += 1
+    elif next_high4 >= take_profit:
+     resultat_gagnant += 1
+     total_resultat += 1
+    elif next_low4 <= stop_loss:
+        resultat_perdant += 1
+        total_resultat += 1
     else:
      total_resultat += 1
  if total_resultat == 0:
