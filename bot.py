@@ -239,23 +239,34 @@ def analyze_market(df, rsi_series, symbol, model):
     ema_50 = calculate_ema(df, 50)
     macd, signal_line = calculate_macd(df)
     features = pd.DataFrame({
-        "rsi": [dernier_rsi],
-        "ema_diff": [ema_10.iloc[-1] - ema_50.iloc[-1]],
-        "macd_diff": [macd.iloc[-1] - signal_line.iloc[-1]],
-        "momentum": [momentum],
-        "volume_rel": [volume_rel],
-        "moving_average": [moving_average],
-        "atr": [atr],
-        "volume_change": [df["volume"].pct_change(periods=1).iloc[-1] * 100 if len(df) > 1 else 0],
-        "ema_200": [calculate_ema(df, 200).iloc[-1]],
-        "ema_100": [calculate_ema(df, 100).iloc[-1]],
-        "ema_10": [calculate_ema(df, 10).iloc[-1]],
-        "ema_50": [calculate_ema(df, 50).iloc[-1]],
-        "close_pct_change_5": [df["close"].pct_change(periods=5).iloc[-1] * 100 if len(df) > 5 else 0]
+        "rsi": 100 - (100 / (1 + (df["close"].diff(1).where(df["close"].diff(1) > 0, 0).rolling(window=14).mean() /
+                                  df["close"].diff(1).where(df["close"].diff(1) < 0, 0).rolling(window=14).mean()))),
+        "ema_diff": df["close"].ewm(span=10).mean() - df["close"].ewm(span=50).mean(),
+        "macd_diff": df["close"].ewm(span=12).mean() - df["close"].ewm(span=26).mean() -
+                     (df["close"].ewm(span=9).mean() - df["close"].ewm(span=26).mean()),
+        "momentum": df["close"].pct_change(periods=10) * 100,
+        "volume_rel": df["volume"] / df["volume"].rolling(window=20).mean(),
+        "moving_average": df["close"].rolling(window=20).mean(),
+        "atr": df["high"].rolling(window=14).max() - df["low"].rolling(window=14).min(),
+        "volume_change": df["volume"].pct_change(periods=1) * 100,
+        "ema_200": df["close"].ewm(span=200).mean(),
+        "ema_100": df["close"].ewm(span=100).mean(),
+        "ema_10": df["close"].ewm(span=10).mean(),
+        "ema_50": df["close"].ewm(span=50).mean(),
+        "close_pct_change_5": df["close"].pct_change(periods=5) * 100,
+        "stochastic_oscillator": 100 * ((df["close"] - df["low"].rolling(window=14).min()) /
+                                        (df["high"].rolling(window=14).max() - df["low"].rolling(window=14).min())),
+        "daily_returns": df["close"].pct_change() * 100,
+        "volatility": df["close"].rolling(window=14).std(),
+        "fractal_dimension": np.log(df["close"].rolling(window=10).std()) / np.log(10),
+        "weighted_moving_average": df["close"].rolling(window=10).apply(
+            lambda x: np.dot(x, np.arange(1, 11)) / np.sum(np.arange(1, 11)), raw=True),
+
     })
+
     # Système de confiance avec un seul seuil
     proba = model.predict_proba(features)[0]
-    if max(proba) > 0.63:  # Seuil unique à 53%
+    if max(proba) > 0.6:  # Seuil unique à 53%
         prediction = np.argmax(proba)
         confidence_factor = max(proba)  # Utilisé pour ajuster les seuils
     else:
