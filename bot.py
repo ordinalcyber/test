@@ -182,19 +182,29 @@ def train_ml_model(df):
     # Calcul des features
     global model
     features = pd.DataFrame({
-        "rsi": calculate_rsi(df),
-        "ema_diff": calculate_ema(df, 10) - calculate_ema(df, 50),
-        "macd_diff": calculate_macd(df)[0] - calculate_macd(df)[1],
+        "rsi": 100 - (100 / (1 + (df["close"].diff(1).where(df["close"].diff(1) > 0, 0).rolling(window=14).mean() /
+                                  df["close"].diff(1).where(df["close"].diff(1) < 0, 0).rolling(window=14).mean()))),
+        "ema_diff": df["close"].ewm(span=10).mean() - df["close"].ewm(span=50).mean(),
+        "macd_diff": df["close"].ewm(span=12).mean() - df["close"].ewm(span=26).mean() -
+                     (df["close"].ewm(span=9).mean() - df["close"].ewm(span=26).mean()),
         "momentum": df["close"].pct_change(periods=10) * 100,
         "volume_rel": df["volume"] / df["volume"].rolling(window=20).mean(),
-        "moving_average": calculate_moving_average(df),
-        "atr": calculate_atr(df),
+        "moving_average": df["close"].rolling(window=20).mean(),
+        "atr": df["high"].rolling(window=14).max() - df["low"].rolling(window=14).min(),
         "volume_change": df["volume"].pct_change(periods=1) * 100,
-        "ema_200": calculate_ema(df, 200),
-        "ema_100": calculate_ema(df, 100),
-        "ema_10": calculate_ema(df, 10),
-        "ema_50": calculate_ema(df, 50),
-        "close_pct_change_5": df["close"].pct_change(periods=5) * 100  # Nouvelle feature
+        "ema_200": df["close"].ewm(span=200).mean(),
+        "ema_100": df["close"].ewm(span=100).mean(),
+        "ema_10": df["close"].ewm(span=10).mean(),
+        "ema_50": df["close"].ewm(span=50).mean(),
+        "close_pct_change_5": df["close"].pct_change(periods=5) * 100,
+        "stochastic_oscillator": 100 * ((df["close"] - df["low"].rolling(window=14).min()) /
+                                        (df["high"].rolling(window=14).max() - df["low"].rolling(window=14).min())),
+        "daily_returns": df["close"].pct_change() * 100,
+        "volatility": df["close"].rolling(window=14).std(),
+        "fractal_dimension": np.log(df["close"].rolling(window=10).std()) / np.log(10),
+        "weighted_moving_average": df["close"].rolling(window=10).apply(
+            lambda x: np.dot(x, np.arange(1, 11)) / np.sum(np.arange(1, 11)), raw=True),
+
     }).dropna()
 
     # Remplacer les valeurs infinies ou NaN par des valeurs par défaut (par exemple, la moyenne ou la médiane)
